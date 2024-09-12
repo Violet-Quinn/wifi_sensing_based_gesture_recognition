@@ -1,0 +1,127 @@
+import joblib
+import pandas as pd
+import re
+from math import sqrt, atan2
+from sklearn.impute import SimpleImputer
+
+# Load the trained model and imputer
+model_filename = 'trained_model.joblib'
+imputer_filename = 'imputer.joblib'
+
+loaded_classifier = joblib.load(model_filename)
+loaded_imputer = joblib.load(imputer_filename)
+
+# Function to process a single CSV file
+def process_single_csv(filename):
+    d = pd.read_csv(filename)
+
+    amps = []
+    phases = []
+
+    for i, j in enumerate(d['data']):
+        imaginary = []
+        real = []
+        amp = []
+        ph = []
+
+        csi_string = re.findall(r"\[(.*)\]", j)[0]
+        csi_raw = [int(x) for x in csi_string.split(",") if x != '']
+
+        for k in range(0, len(csi_raw), 2):
+            imaginary.append(csi_raw[k])
+            real.append(csi_raw[k + 1])
+
+        for k in range(len(imaginary)):
+            amp.append(round(sqrt(imaginary[k] ** 2 + real[k] ** 2), 1))
+            ph.append(round(atan2(imaginary[k], real[k])))
+
+        amps.append(amp)
+        phases.append(ph)
+
+    # Combine amps and phases into a single list
+    result_list = [item for sublist in (amps + phases) for item in sublist]
+
+    return result_list
+
+# Function to classify a new file
+import numpy as np
+
+
+def classify_new_file(filename):
+    # Process the new file
+    result_list = process_single_csv(filename)
+
+    # Convert the result list to a DataFrame
+    new_data_df = pd.DataFrame([result_list])
+
+    # Print the number of features in the new data
+    print("Number of features in the new data:", new_data_df.shape[1])
+
+    # Check if the number of features matches the expectation
+    if new_data_df.shape[1] != loaded_imputer.statistics_.shape[0]:
+
+
+        # Fill missing values with zeros
+        new_data_df = new_data_df.reindex(columns=range(loaded_imputer.statistics_.shape[0]), fill_value=0)
+
+    # Impute missing values with the median (you can choose a different strategy based on your data)
+    new_data_array = loaded_imputer.transform(new_data_df)
+
+    # Make predictions with the loaded classifier
+    prediction = loaded_classifier.predict(new_data_array)
+
+    # Print the predicted label
+    print("Predicted Label:", prediction[0])
+
+    return prediction[0]
+
+
+# Example usage for a new file
+new_file_path = r'C:\Users\avina\Downloads\yes_s1_3.csv'
+predicted_label = classify_new_file(new_file_path)
+
+Yeh gesture predict ka h
+Isme trained_model.joblib file use huva h jo
+Knn algorithm ka result save karta h
+
+
+import pandas as pd
+import re
+from math import sqrt, atan2
+import matplotlib.pyplot as plt
+
+def breathe_rate(filename):
+    d = pd.read_csv(filename)
+
+    max_values = []
+
+    for i, j in enumerate(d['data']):
+        imaginary = []
+        real = []
+
+        csi_string = re.findall(r"\[(.*)\]", j)[0]
+        csi_raw = [int(x) for x in csi_string.split(",") if x != '']
+
+        for k in range(0, len(csi_raw), 2):
+            imaginary.append(csi_raw[k])
+            real.append(csi_raw[k + 1])
+
+        amp = [round(sqrt(imaginary[k] ** 2 + real[k] ** 2), 1) for k in range(len(imaginary))]
+        max_values.append(max(amp))
+
+    # Plot the graph
+    fig, ax = plt.subplots(figsize=(10, 6))  # Adjust the figure size as needed
+    ax.plot(max_values, marker='o', linestyle='-', color='b')  # Line graph with markers
+
+    # Set labels and title
+    ax.set_xlabel('Data Row')
+    ax.set_ylabel('Maximum Value')
+    ax.set_title('Maximum Value from Each Data Row')
+
+    plt.show()
+
+# Example usage:
+filename = r"C:\Users\avina\Downloads\bye_s1_1.csv"
+breathe_rate(filename)
+
+YEH GRAPH PLOT KARNE KA CODE
